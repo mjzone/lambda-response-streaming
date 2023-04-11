@@ -1,0 +1,40 @@
+service: lambda-stream-api
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:ListBucket
+          Resource: 
+            - arn:aws:s3:::lambda-response-stream-1234
+            - arn:aws:s3:::lambda-response-stream-1234/*
+
+functions:
+  downloadPdf:
+    handler: handler.downloadPdf
+
+resources:
+  Resources:
+    downloadPdfUrl:
+      Type: AWS::Lambda::Url
+      Properties:
+        AuthType: NONE
+        InvokeMode: RESPONSE_STREAM
+        TargetFunctionArn: !Ref DownloadPdfLambdaFunction
+    permissionForURLInvoke:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName: !Ref DownloadPdfLambdaFunction
+        FunctionUrlAuthType: "NONE"
+        Action: lambda:InvokeFunctionUrl
+        Principal: "*"
+  Outputs:
+    downloadPdfUrl:
+      Value: !GetAtt downloadPdfUrl.FunctionUrl
